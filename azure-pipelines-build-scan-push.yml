@@ -36,7 +36,7 @@ stages:
       displayName: 'Download and install Trivy'
 
     - task: CmdLine@2
-      displayName: "Run trivy scan"
+      displayName: "Run MendCLI  scan"
       inputs:
         script: |
             trivy image --severity LOW,MEDIUM --format template --template "@templates/junit.tpl" -o junit-report-low-med.xml $(imageName):$(tag)         
@@ -48,7 +48,7 @@ stages:
         testResultsFiles: '**/junit-report-low-med.xml'
         mergeTestResults: true
         failTaskOnFailedTests: false
-        testRunTitle: 'Trivy - Low and Medium Vulnerabilities'
+        testRunTitle: 'Mend - Low and Medium Vulnerabilities'
       condition: 'always()'   
 
     - task: PublishTestResults@2
@@ -57,7 +57,7 @@ stages:
         testResultsFiles: '**/junit-report-high-crit.xml'
         mergeTestResults: true
         failTaskOnFailedTests: true
-        testRunTitle: 'Trivy - High and Critical Vulnerabilities'
+        testRunTitle: 'Mend - High and Critical Vulnerabilities'
       condition: 'always()'             
 
     - task: Docker@2
