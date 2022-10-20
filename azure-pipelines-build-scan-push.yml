@@ -5,9 +5,9 @@ resources:
 - repo: self
 
 variables:
-  cliversion: 0.9.2
+  trivyVersion: 0.9.2
   tag: 'azuredevops-$(Build.BuildNumber)'
-  imageName: 'mend/container-scanning-demo'
+  imageName: 'liamgu/container-scanning-demo'
 
 stages:
 - stage: Build
@@ -28,11 +28,38 @@ stages:
         buildContext: '$(Build.SourcesDirectory)/src/'
         tags: '$(tag)'
 
+    - script: |
+        sudo apt-get install rpm
+        wget https://github.com/aquasecurity/trivy/releases/download/v$(trivyVersion)/trivy_$(trivyVersion)_Linux-64bit.deb
+        sudo dpkg -i trivy_$(trivyVersion)_Linux-64bit.deb
+        trivy -v
+      displayName: 'Download and install Trivy'
+
     - task: CmdLine@2
-      displayName: "Run MendCLI scan"
+      displayName: "Run trivy scan"
       inputs:
         script: |
-            mendcli image --severity LOW,MEDIUM $(imageName):$(tag)
+            trivy image --severity LOW,MEDIUM --format template --template "@templates/junit.tpl" -o junit-report-low-med.xml $(imageName):$(tag)         
+            trivy image --severity HIGH,CRITICAL --format template --template "@templates/junit.tpl" -o junit-report-high-crit.xml $(imageName):$(tag)         
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/junit-report-low-med.xml'
+        mergeTestResults: true
+        failTaskOnFailedTests: false
+        testRunTitle: 'Trivy - Low and Medium Vulnerabilities'
+      condition: 'always()'   
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/junit-report-high-crit.xml'
+        mergeTestResults: true
+        failTaskOnFailedTests: true
+        testRunTitle: 'Trivy - High and Critical Vulnerabilities'
+      condition: 'always()'             
+
     - task: Docker@2
       inputs:
         containerRegistry: 'Docker hub'
