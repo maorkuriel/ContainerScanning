@@ -5,9 +5,8 @@ resources:
 - repo: self
 
 variables:
-  trivyVersion: 0.9.2
-  tag: 'azuredevops-$(Build.BuildNumber)'
-  imageName: 'liamgu/container-scanning-demo'
+  tag: '18.04'
+  imageName: 'ubuntu'
 
 stages:
 - stage: Build
@@ -16,7 +15,7 @@ stages:
   - job: Build
     displayName: Build, Scan and Push
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: 'ubuntu'
     steps:
     - task: Docker@2
       displayName: Build an image
